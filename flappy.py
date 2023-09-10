@@ -1,4 +1,4 @@
-from shellEngine import Game, Sprite, screen_height, screen_width, colors
+from shellEngine import *
 
 import os
 import sys
@@ -11,6 +11,8 @@ from threading import Thread
 # Example by Omena0
 
 game = Game()
+
+cap_fps = False
 
 def gameloop():
     loop = 0
@@ -74,7 +76,7 @@ for i in range(round(screen_height)):
 
 pillars = []
 
-for i in range(3):
+for i in range(4):
     if i == 0: continue
     pillar = Sprite(pillar_texture)
 

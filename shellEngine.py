@@ -73,7 +73,6 @@ class Game:
         self.screen = ''
         for y in range(screen_height):
             for x in range(screen_width):
-                # Rendering code and shit
                 color = self.render(x,y)
                 self.screen += color
             self.screen += '\n'
@@ -127,6 +126,3 @@ class Game:
             t.sleep(0.1-(end-start))
             loop += 1
 
-
-
-    
