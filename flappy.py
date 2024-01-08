@@ -22,7 +22,7 @@ def gameloop():
         for pillar in pillars:
             pillar.setx(-1)
 
-            if player.x in pillar.xrange() and player.y in pillar.yrange():
+            if player.checkCollision(pillar.x, pillar.y):
                 if player.y in range(pillar.y+22,pillar.y+27): pass
                 else:
                     game.screen = '\n'*screen_height
@@ -72,7 +72,6 @@ pillar_texture.append(colors[4]*6)
 
 for i in range(round(screen_height)):
     pillar_texture.append(colors[1]+colors[3]*4+colors[1])
-
 
 pillars = []
 
