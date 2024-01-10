@@ -76,11 +76,11 @@ for i in range(round(screen_height)):
 
 pillars = []
 
-for i in range(4):
-    if i == 0: continue
+for i in range(6):
+    i += 1
     pillar = Sprite(pillar_texture)
 
-    pillar.x = 40*i
+    pillar.x = 20*i+20
     pillar.y = r.randrange(10)-20
     pillar.wall_physics = False
     pillars.append(pillar)

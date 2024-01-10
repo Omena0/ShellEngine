@@ -8,8 +8,6 @@ colors = [' ','░','▒','▓','█']
 
 cap_fps = False
 
-sprites = []
-
 def back(num:int=1):return f'\x1b[{num}A'
 
 class Sprite:
@@ -20,7 +18,7 @@ class Sprite:
         self.height  = len(texture)
         self.texture = texture
         self.wall_physics = True
-        sprites.append(self)
+        sprites.add(self)
         
     def sety(self,y):
         if self.wall_physics:
@@ -41,7 +39,9 @@ class Sprite:
     
     def yrange(self):
         return range(self.y,self.y+self.height)
-        
+
+sprites:set[Sprite] = set()
+
 class Game:
     def __init__(self):
         global game
@@ -56,12 +56,13 @@ class Game:
         self.mspt = 0
         self.mspt_list = []
         self.changed = True
+        self.bgColor = colors[1]
         self._init_display()
         
     def _init_display(self):
         self.screen = ''
-        for i in range(screen_height):
-            for i in range(screen_width):
+        for _ in range(screen_height):
+            for _ in range(screen_width):
                 self.screen += ''
             self.screen += '\n'
     
@@ -78,12 +79,13 @@ class Game:
             self.screen += '\n'
         
     def render(self,x,y):
-        color = colors[1]
+        color = self.bgColor
         for sprite in sprites:
             if x in sprite.xrange():
                 if y in sprite.yrange():
                     try:
-                        color = sprite.texture[y-sprite.y-1][x-sprite.x-1]
+                        if sprite.texture[y-sprite.y][x-sprite.x] != self.bgColor:
+                            color = sprite.texture[y-sprite.y][x-sprite.x]
                     except: pass
         return color
     
@@ -95,13 +97,12 @@ class Game:
         
     def run(self):
         global screen_height
-        render = True
         Thread(target=self.loop,daemon=True).start()
         while True:
-            start = t.time()
+            start = t.perf_counter()
             self.update_display()
             self.screen_renderer()
-            end = t.time()
+            end = t.perf_counter()
             # tick time calc
             duration = (end - start)
             self.tick_time = duration
@@ -115,14 +116,14 @@ class Game:
     def loop(self):
         loop = 0
         while True:
-            start = t.time()
+            start = t.perf_counter()
 
             self.fps_list.append(self.fps_per_sec)
             self.fps_per_sec = 0
             self.fps = round(sum(self.fps_list)/len(self.fps_list),2)
             if len(self.fps_list) > 25: self.fps_list.pop(1)
             
-            end = t.time()
+            end = t.perf_counter()
             t.sleep(0.1-(end-start))
             loop += 1
 
