@@ -8,6 +8,8 @@ colors = [' ','░','▒','▓','█']
 
 cap_fps = False
 
+sprites = []
+
 def back(num:int=1):return f'\x1b[{num}A'
 
 class Sprite:
@@ -18,7 +20,7 @@ class Sprite:
         self.height  = len(texture)
         self.texture = texture
         self.wall_physics = True
-        sprites.add(self)
+        sprites.append(self)
         
     def sety(self,y):
         if self.wall_physics:
@@ -34,11 +36,12 @@ class Sprite:
         self.x += x
         game.changed = True
         
-    def checkCollision(self,x:int,y:int) -> bool:
-        return x in range(self.x,self.x+self.width) and y in range(self.y,self.y+self.height)
-
-sprites:set[Sprite] = set()
-
+    def xrange(self):
+        return range(self.x,self.x+self.width)
+    
+    def yrange(self):
+        return range(self.y,self.y+self.height)
+        
 class Game:
     def __init__(self):
         global game
@@ -77,9 +80,11 @@ class Game:
     def render(self,x,y):
         color = colors[1]
         for sprite in sprites:
-            if sprite.checkCollision(x,y):
-                try: color = sprite.texture[y-sprite.y][x-sprite.x]
-                except: pass
+            if x in sprite.xrange():
+                if y in sprite.yrange():
+                    try:
+                        color = sprite.texture[y-sprite.y-1][x-sprite.x-1]
+                    except: pass
         return color
     
     def update_display(self):
@@ -90,12 +95,13 @@ class Game:
         
     def run(self):
         global screen_height
+        render = True
         Thread(target=self.loop,daemon=True).start()
         while True:
-            start = t.perf_counter()
+            start = t.time()
             self.update_display()
             self.screen_renderer()
-            end = t.perf_counter()
+            end = t.time()
             # tick time calc
             duration = (end - start)
             self.tick_time = duration
@@ -109,14 +115,14 @@ class Game:
     def loop(self):
         loop = 0
         while True:
-            start = t.perf_counter()
+            start = t.time()
 
             self.fps_list.append(self.fps_per_sec)
             self.fps_per_sec = 0
             self.fps = round(sum(self.fps_list)/len(self.fps_list),2)
             if len(self.fps_list) > 25: self.fps_list.pop(1)
             
-            end = t.perf_counter()
+            end = t.time()
             t.sleep(0.1-(end-start))
             loop += 1
 
