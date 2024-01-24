@@ -76,7 +76,7 @@ for i in range(round(screen_height)):
 
 pillars = []
 
-for i in range(6):
+for i in range(5):
     i += 1
     pillar = Sprite(pillar_texture)
 
