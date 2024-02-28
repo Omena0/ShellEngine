@@ -42,7 +42,7 @@ def gameloop():
 
 def on_press(char:kb.KeyboardEvent):
     char = char.name
-    a.changed = True
+    game.changed = True
     if char == 'w':
         Thread(target=jump,daemon=True).start()
 
@@ -53,7 +53,7 @@ def jump():
     
 print('\n'*50)
 
-a = Game()
+
 
 player_texture = [
     colors[3]*3,
@@ -93,7 +93,7 @@ kb.on_press(on_press)
 
 Thread(target=gameloop,daemon=True).start()
 
-a.run()
+game.run()
 
 
     
