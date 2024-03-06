@@ -1,5 +1,6 @@
 import time as t
 from threading import Thread
+from math import floor, ceil
 
 screen_height = 20
 screen_width = 100
@@ -7,6 +8,16 @@ screen_width = 100
 colors = [' ','░','▒','▓','█']
 
 cap_fps = False
+
+extratext = ''
+
+print_ = print
+
+def print(*args):
+    global extratext
+    a = []
+    for v in args: a.append(f'{v}')
+    extratext = ' '.join(a)
 
 def back(num:int=1):return f'\x1b[{num}A'
 
@@ -20,26 +31,48 @@ class Sprite:
         self.wall_physics = True
         sprites.add(self)
         
+        # Hitboxes (collision)
+        self.xrange = self.get_xrange()
+        self.yrange = self.get_yrange()
+        
     def sety(self,y):
         if self.wall_physics:
+            y = ceil(y)
             if self.y+y > screen_height or self.y+y+self.height > screen_height or self.y+y < 0:
                 return
         self.y += y
+        self.yrange = self.get_yrange()
         game.changed = True
         
     def setx(self,x):
         if self.wall_physics:
+            x = ceil(x)
             if self.x+x > screen_width or self.x+x+self.width > screen_width or self.x+x < 0:
                 return
         self.x += x
+        self.xrange = self.get_xrange()
         game.changed = True
         
-    def xrange(self):
-        return range(self.x,self.x+self.width)
+    def get_xrange(self):
+        return range(round(self.x),round(self.x)+self.width)
     
-    def yrange(self):
-        return range(self.y,self.y+self.height)
-
+    def get_yrange(self):
+        return range(round(self.y),round(self.y)+self.height)
+    
+    def collides_with(self, *others):
+        global extratext
+        collisions = []
+        for other in others:
+            if other == 'edge':
+                collisions.append((self.x <= 0 or self.y <= 0) or (self.x+self.width >= screen_width or self.y+self.height >= screen_height))
+            else:
+                self.setx(0)
+                other.setx(0)
+                if set(self.xrange) & set(other.xrange) and any(set(self.yrange) & set(other.yrange)):
+                    collisions.append(True)
+        if any(collisions): extratext += '#'
+        return any(collisions)
+        
 sprites:set[Sprite] = set()
 
 class Game:
@@ -58,6 +91,7 @@ class Game:
         self.changed = True
         self.bgColor = colors[1]
         self._init_display()
+        self.running = True
         
     def _init_display(self):
         self.screen = ''
@@ -81,8 +115,8 @@ class Game:
     def render(self,x,y):
         color = self.bgColor
         for sprite in sprites:
-            if x in sprite.xrange():
-                if y in sprite.yrange():
+            if x in sprite.xrange:
+                if y in sprite.yrange:
                     try:
                         if sprite.texture[y-sprite.y][x-sprite.x] != self.bgColor:
                             color = sprite.texture[y-sprite.y][x-sprite.x]
@@ -90,22 +124,22 @@ class Game:
         return color
     
     def update_display(self):
-        print(back(screen_height+10),end='')
-        print(f'FPS: {self.fps:2<} TICK: {self.tick} FRAME: {self.frame} TICK TIME: {self.mspt}')
-        print(self.screen,end='')
+        print_(back(screen_height+10),end='')
+        print_(f'FPS: {self.fps:<3} TICK: {self.tick:<10} FRAME: {self.frame:<10} TICK TIME: {self.mspt:<10} {extratext:<10}')
+        print_(self.screen,end='')
         self.tick += 1
         
     def run(self):
         global screen_height
         Thread(target=self.loop,daemon=True).start()
-        while True:
+        while self.running:
             start = t.perf_counter()
             self.update_display()
             self.screen_renderer()
             end = t.perf_counter()
             # tick time calc
             duration = (end - start)
-            self.tick_time = duration
+            self.tick_time = round(duration,5)
             self.mspt_list.append(duration)
             if len(self.mspt_list) > 25: self.mspt_list.pop(1)
             self.mspt = sum(self.mspt_list)/len(self.mspt_list)
@@ -115,7 +149,7 @@ class Game:
             
     def loop(self):
         loop = 0
-        while True:
+        while self.running:
             start = t.perf_counter()
 
             self.fps_list.append(self.fps_per_sec)
