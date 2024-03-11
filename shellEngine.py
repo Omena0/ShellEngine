@@ -1,9 +1,14 @@
 import time as t
 from threading import Thread
-from math import floor, ceil
+from math import ceil
+from os import get_terminal_size, system
 
-screen_height = 20
+system('')
+
+size = get_terminal_size()
+
 screen_width = 100
+screen_height = 20
 
 colors = [' ','░','▒','▓','█']
 
@@ -36,8 +41,8 @@ class Sprite:
         self.yrange = self.get_yrange()
         
     def sety(self,y):
+        y = ceil(y)
         if self.wall_physics:
-            y = ceil(y)
             if self.y+y > screen_height or self.y+y+self.height > screen_height or self.y+y < 0:
                 return
         self.y += y
@@ -45,8 +50,8 @@ class Sprite:
         game.changed = True
         
     def setx(self,x):
+        x = ceil(x)
         if self.wall_physics:
-            x = ceil(x)
             if self.x+x > screen_width or self.x+x+self.width > screen_width or self.x+x < 0:
                 return
         self.x += x
@@ -70,7 +75,6 @@ class Sprite:
                 other.setx(0)
                 if set(self.xrange) & set(other.xrange) and any(set(self.yrange) & set(other.yrange)):
                     collisions.append(True)
-        if any(collisions): extratext += '#'
         return any(collisions)
         
 sprites:set[Sprite] = set()
@@ -124,7 +128,8 @@ class Game:
         return color
     
     def update_display(self):
-        print_(back(screen_height+10),end='')
+        print_(back(screen_height+100),end='')
+        print('\n'*round(size.lines/8))
         print_(f'FPS: {self.fps:<3} TICK: {self.tick:<10} FRAME: {self.frame:<10} TICK TIME: {self.mspt:<10} {extratext:<10}')
         print_(self.screen,end='')
         self.tick += 1
@@ -160,4 +165,13 @@ class Game:
             end = t.perf_counter()
             t.sleep(0.1-(end-start))
             loop += 1
+    
+    def geometry(self,width:int,height:int) -> None:
+        global screen_width, screen_height
+        screen_width = width
+        screen_height = height
+        #self._init_display()
+        #self.changed = True
 
+if __name__ == '__main__':
+    import pong
