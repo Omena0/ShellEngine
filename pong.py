@@ -1,12 +1,13 @@
 from shellEngine import *
 from threading import Thread
 import keyboard as kb
+import random as r
 import os
 
 
 os.system('cls')
 
-screen_width = 225
+screen_width = 100
 screen_height = 30
 
 game = Game()
@@ -14,11 +15,7 @@ game.geometry(screen_width,screen_height)
 
 game.bgColor = colors[1]
 
-paddle_texture = []
-for i in range(round(screen_height/5)):
-    paddle_texture.append(('#','#'))
-
-
+paddle_texture = [('#', '#') for _ in range(round(screen_height/5))]
 paddle1 = Sprite(paddle_texture)
 paddle2 = Sprite(paddle_texture)
 
@@ -35,7 +32,7 @@ ball = Sprite((('@','@','@'),('@','@','@')))
 
 ball.wall_physics = False
 
-ball.velocity = [4,1]
+ball.velocity = r.choice([[4,1],[4,-1],[-4,1],[-4,-1]])
 
 ball.setx(round(screen_width/2))
 ball.sety(round(screen_height/2))
@@ -47,7 +44,8 @@ score_display.sety(screen_height/2)
 def gameloop():
     score = 0
     while True:
-        t.sleep(0.1)
+        if score: t.sleep(0.1)
+        else: t.sleep(0.2)
         ball.setx(ball.velocity[0])
         ball.sety(ball.velocity[1])
         if ball.collides_with(paddle1,paddle2):
@@ -79,11 +77,11 @@ def on_press(key):
     key = key.name
     if key == 'w':
         paddle1.sety(-sens)
-    if key == 's':
+    elif key == 's':
         paddle1.sety(sens)
-    if key == 'ylänuoli':
+    elif key == 'ylänuoli':
         paddle2.sety(-sens)
-    if key == 'alanuoli':
+    elif key == 'alanuoli':
         paddle2.sety(sens)
     game.changed = True
     

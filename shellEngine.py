@@ -1,9 +1,10 @@
+import contextlib
 import time as t
 from threading import Thread
 from math import ceil
 from os import get_terminal_size, system
 
-system('')
+system('cls')
 
 size = get_terminal_size()
 
@@ -20,8 +21,7 @@ print_ = print
 
 def print(*args):
     global extratext
-    a = []
-    for v in args: a.append(f'{v}')
+    a = [f'{v}' for v in args]
     extratext = ' '.join(a)
 
 def back(num:int=1):return f'\x1b[{num}A'
@@ -42,18 +42,16 @@ class Sprite:
         
     def sety(self,y):
         y = ceil(y)
-        if self.wall_physics:
-            if self.y+y > screen_height or self.y+y+self.height > screen_height or self.y+y < 0:
-                return
+        if self.wall_physics and (self.y+y > screen_height or self.y+y+self.height > screen_height or self.y+y < 0):
+            return
         self.y += y
         self.yrange = self.get_yrange()
         game.changed = True
         
     def setx(self,x):
         x = ceil(x)
-        if self.wall_physics:
-            if self.x+x > screen_width or self.x+x+self.width > screen_width or self.x+x < 0:
-                return
+        if self.wall_physics and (self.x+x > screen_width or self.x+x+self.width > screen_width or self.x+x < 0):
+            return
         self.x += x
         self.xrange = self.get_xrange()
         game.changed = True
@@ -119,12 +117,10 @@ class Game:
     def render(self,x,y):
         color = self.bgColor
         for sprite in sprites:
-            if x in sprite.xrange:
-                if y in sprite.yrange:
-                    try:
-                        if sprite.texture[y-sprite.y][x-sprite.x] != self.bgColor:
-                            color = sprite.texture[y-sprite.y][x-sprite.x]
-                    except: pass
+            if x in sprite.xrange and y in sprite.yrange:
+                with contextlib.suppress(Exception):
+                    if sprite.texture[y-sprite.y][x-sprite.x] != self.bgColor:
+                        color = sprite.texture[y-sprite.y][x-sprite.x]
         return color
     
     def update_display(self):
@@ -148,9 +144,8 @@ class Game:
             self.mspt_list.append(duration)
             if len(self.mspt_list) > 25: self.mspt_list.pop(1)
             self.mspt = sum(self.mspt_list)/len(self.mspt_list)
-            try:
+            with contextlib.suppress(Exception):
                 if cap_fps: t.sleep(0.01 - duration)
-            except: pass
             
     def loop(self):
         loop = 0

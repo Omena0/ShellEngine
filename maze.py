@@ -1,12 +1,16 @@
+import contextlib
 from shellEngine import *
 import keyboard as kb
 import random as r
 import numpy as np
+import os
 # ShellEngine: import time as t
 # ShellEngine: from threading import Thread
 
 # Maze solving example
 # By Omena0
+
+# TODO: Fix
 
 def createMaze(dim:int) -> list:
     # Create a grid filled with walls
@@ -18,7 +22,7 @@ def createMaze(dim:int) -> list:
 
     # Initialize the stack with the starting point
     stack = [(x, y)]
-    while len(stack) > 0:
+    while stack:
         x, y = stack[-1]
 
         # Define possible directions
@@ -34,7 +38,7 @@ def createMaze(dim:int) -> list:
                 break
         else:
             stack.pop()
-            
+
     # Create an entrance and an exit
     maze[1, 0] = 0
     maze[-2, -1] = 0
@@ -44,12 +48,11 @@ def createMaze(dim:int) -> list:
 c = True
 last_size = os.get_terminal_size()
 
-def keypress(key:kb.KeyboardEvent):
+def keypress(key:kb.KeyboardEvent):  # sourcery skip: low-code-quality
     global c, screen_height, last_size
     key = key.name
     if key == 'c':
-        if c: c = False
-        else: c = True
+        c = not c
         return
     if os.get_terminal_size() != last_size:
         last_size = os.get_terminal_size()
@@ -59,7 +62,7 @@ def keypress(key:kb.KeyboardEvent):
     if game.screen.splitlines()[-2][-1] == '$':
         init()
     t.sleep(r.randrange(1,100)/1000) # Make game inconsistent on purpose
-    try:
+    with contextlib.suppress(Exception):
         match key:
             case 'w':
                 if c:
@@ -95,12 +98,12 @@ def keypress(key:kb.KeyboardEvent):
                     for _ in range(2):
                         if game.screen.splitlines()[player.y][player.x+1] != colors[2]: return
                         player.setx(1)
-    except Exception: pass
     if key in {'w','a','s','d'}:
         game.changed = True
 
 game = Game()
-game.bgColor = colors[2]
+game.bgColor = colors[1]
+game.geometry(100,25)
 
 maze = Sprite([['']])
 maze.wall_physics = False
@@ -109,12 +112,18 @@ player = Sprite([['$']])
 player.wall_physics = False
 
 def init():
-    os.system('cls')
     player.x = 0
     player.y = 1
-    _maze = [str(i)\
-        .replace('1.0',colors[4]*2).replace(' ','').replace('0.0',colors[2]*2).replace('[','').replace(']','').replace(',','')\
-            for i in [i for i in createMaze(round(screen_height/2)-1)]]
+    _maze = [
+        list(str(i)
+        .replace('1.0', colors[4] * 2)
+        .replace(' ', '')
+        .replace('0.0', colors[2] * 2)
+        .replace('[', '')
+        .replace(']', '')
+        .replace(',', ''))
+        for i in list(createMaze(round(screen_height / 2) - 1))
+    ]
     maze.texture = _maze
     maze.width   = len(_maze[0])
     maze.height  = len(_maze)
