@@ -7,7 +7,7 @@ import os
 
 os.system('cls')
 
-screen_width = 100
+screen_width = 125
 screen_height = 30
 
 game = Game()
@@ -75,14 +75,15 @@ sens = 3
 
 def on_press(key):
     key = key.name
-    if key == 'w':
-        paddle1.sety(-sens)
-    elif key == 's':
-        paddle1.sety(sens)
-    elif key == 'ylänuoli':
-        paddle2.sety(-sens)
-    elif key == 'alanuoli':
-        paddle2.sety(sens)
+    for _ in range(sens):
+        if key == 'w':
+            paddle1.sety(-1)
+        elif key == 's':
+            paddle1.sety(1)
+        elif key == 'ylänuoli':
+            paddle2.sety(-1)
+        elif key == 'alanuoli':
+            paddle2.sety(1)
     game.changed = True
     
 kb.on_press(on_press,True)
