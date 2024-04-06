@@ -8,7 +8,7 @@ import os
 os.system('cls')
 
 screen_width = 125
-screen_height = 30
+screen_height = 27
 
 game = Game()
 game.geometry(screen_width,screen_height)
