@@ -1,8 +1,9 @@
 import contextlib
 import time as t
 from threading import Thread
-from math import ceil
+from math import ceil,floor
 from os import get_terminal_size, system
+from numba import njit
 
 system('cls')
 
@@ -26,8 +27,42 @@ def print(*args):
 
 def back(num:int=1):return f'\x1b[{num}A'
 
+@njit(cache=True)
+def get_neighbours(x:int,y:int) -> list[tuple[int,int]]:
+    return [
+        (x + 1, y + 1),
+        (x, y + 1),
+        (x - 1, y + 1),
+        (x + 1, y),
+        (x, y),
+        (x - 1, y),
+        (x + 1, y + 1),
+        (x, y + 1),
+        (x - 1, y + 1)
+    ]
+
+def genRegions():
+    ### Region shit
+
+    # Define region size and count
+    reg_size_x = max(i.width for i in sprites)
+    reg_size_y = max(i.height for i in sprites)
+    
+    reg_count_x = round(reg_size_x / screen_width)+1
+    reg_count_y = round(reg_size_y / screen_height)+1
+    
+    # Define regions tuple's dimensions
+    regions = [[[] for _ in range(reg_count_y*2)] for _ in range(reg_count_x*2)]
+    
+    # Generate aregions
+    for sprite in sprites:
+        x = floor(sprite.x / reg_size_x)-1
+        y = floor(sprite.y / reg_size_y)-1
+        regions[x][y].append(sprite)
+
 class Sprite:
     def __init__(self,texture:list):
+        global reg_size_x, reg_size_y, reg_count_x, reg_count_y, regions
         self.x = 2
         self.y = 2
         self.width   = len(texture[0])
@@ -35,27 +70,48 @@ class Sprite:
         self.texture = texture
         self.wall_physics = True
         sprites.add(self)
-        
-        # Hitboxes (collision)
+
+        ## Bake Hitboxes (collision)
         self.xrange = self.get_xrange()
         self.yrange = self.get_yrange()
-        
+
+        ### Region shit
+
+        # Define region size and count
+        reg_size_x = max(i.width for i in sprites)
+        reg_size_y = max(i.height for i in sprites)
+
+        reg_count_x = round(reg_size_x / screen_width)
+        reg_count_y = round(reg_size_y / screen_height)
+
+        # Define regions tuple's dimensions
+        regions = [[[] for _ in range(reg_count_y+1)] for _ in range(reg_count_x+1)]
+
+        # Generate aregions
+        x = round(self.x / reg_size_x)-1
+        y = round(self.y / reg_size_y)-1
+        regions[x][y].append(self)
+
+        self.region = (x,y)
+
     def sety(self,y):
+        genRegions()
         y = ceil(y)
         if self.wall_physics and (self.y+y > screen_height or self.y+y+self.height > screen_height or self.y+y < 0):
             return
         self.y += y
         self.yrange = self.get_yrange()
         game.changed = True
-        
+    
     def setx(self,x):
+        genRegions()
         x = ceil(x)
         if self.wall_physics and (self.x+x > screen_width or self.x+x+self.width > screen_width or self.x+x < 0):
             return
         self.x += x
         self.xrange = self.get_xrange()
         game.changed = True
-        
+    
     def get_xrange(self):
         return range(round(self.x),round(self.x)+self.width)
     
@@ -74,8 +130,11 @@ class Sprite:
                 if set(self.xrange) & set(other.xrange) and any(set(self.yrange) & set(other.yrange)):
                     collisions.append(True)
         return any(collisions)
-        
+
 sprites:set[Sprite] = set()
+regions:tuple[Sprite] = ()
+
+reg_size_x, reg_size_y = screen_width/2, screen_height/2
 
 class Game:
     def __init__(self):
