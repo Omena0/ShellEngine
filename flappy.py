@@ -18,23 +18,25 @@ def gameloop():
     loop = 0
     while True:
         player.sety(1)
-
+        
         for pillar in pillars:
             pillar.setx(-1)
 
-            if player.collides_with(pillar) and player.y not in range(pillar.y + 22, pillar.y + 27):
-                game.screen = '\n'*screen_height
-                sys.tracebacklimit = -100
-                print('!!! You died! Killing program.. !!!'+' '*100)
-                while True:
-                    os.kill(0,0)
-
-
+            if player.collides_with(pillar):
+                if player.y in range(pillar.y+22,pillar.y+27): pass
+                else:
+                    game.screen = '\n'*screen_height
+                    sys.tracebacklimit = -100
+                    print('!!! You died! Killing program.. !!!'+' '*100)
+                    while True:
+                        os.kill(0,0)
+                    
+                    
 
             if pillar.x < -5:
                 pillar.x = screen_width
                 pillar.y = r.randrange(10)-20
-
+        
         t.sleep(0.16)
         loop += 1
 
@@ -58,16 +60,20 @@ player_texture = [
     colors[3]*3
 ]
 
-pillar_texture = [
-    colors[1] + colors[3] * 4 + colors[1] for _ in range(round(screen_height))
-]
+pillar_texture = []
+
+for i in range(round(screen_height)):
+    pillar_texture.append(colors[1]+colors[3]*4+colors[1])
+    
 pillar_texture.append(colors[4]*6)
-pillar_texture.extend(colors[1]*6 for _ in range(round(screen_height/4)+1))
+for i in range(round(screen_height/4)+1):
+    pillar_texture.append(colors[1]*6)
 pillar_texture.append(colors[4]*6)
 
-pillar_texture.extend(
-    colors[1] + colors[3] * 4 + colors[1] for _ in range(round(screen_height))
-)
+for i in range(round(screen_height)):
+    pillar_texture.append(colors[1]+colors[3]*4+colors[1])
+
+
 pillars = []
 
 for i in range(5):
