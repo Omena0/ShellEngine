@@ -5,22 +5,20 @@ import random as r
 import os
 
 
-os.system('cls')
-
-screen_width = 125
-screen_height = 27
+screen_width = 100
+screen_height = 20
 
 game = Game()
 game.geometry(screen_width,screen_height)
 
-game.bgColor = colors[1]
+texture = [
+    [
+        block(4,'white')
+    ] for _ in range(round(screen_height/5))
+]
 
-paddle_texture = [('#', '#') for _ in range(round(screen_height/5))]
-paddle1 = Sprite(paddle_texture)
-paddle2 = Sprite(paddle_texture)
-
-paddle1.width = 2
-paddle2.width = 2
+paddle1 = Sprite(texture)
+paddle2 = Sprite(texture)
 
 paddle1.setx(2)
 paddle2.setx(screen_width-7)
@@ -28,35 +26,55 @@ paddle2.setx(screen_width-7)
 paddle1.sety(round(screen_height/2-3))
 paddle2.sety(round(screen_height/2-3))
 
-ball = Sprite((('@','@','@'),('@','@','@')))
+ball = Sprite((
+    (
+        block(4,'red'),
+        block(4,'red'),
+        block(4,'red')
+    ),
+    (
+        block(4,'red'),
+        block(4,'red'),
+        block(4,'red')
+    )
+))
 
 ball.wall_physics = False
 
 ball.velocity = r.choice([[4,1],[4,-1],[-4,1],[-4,-1]])
 
-ball.setx(round(screen_width/2))
-ball.sety(round(screen_height/2))
-
-score_display = Sprite(['0'])
-score_display.setx(screen_width/2)
-score_display.sety(screen_height/2)
+ball.setx(round(screen_width//2))
+ball.sety(round(screen_height//2))
 
 def gameloop():
     score = 0
     while True:
-        if score: t.sleep(0.1)
+        delay = round(0.1*(150-score)/100,4)
+        if score: t.sleep(delay)
         else: t.sleep(0.2)
-        ball.setx(ball.velocity[0])
+        print(f'Score: {score} Speed: {delay}')
+        ball.setx(ball.velocity[0]//2)
         ball.sety(ball.velocity[1])
+
         if ball.collides_with(paddle1,paddle2):
             ball.velocity = -ball.velocity[0], ball.velocity[1]
             score += 1
-            score_display.texture = [str(score)]
-            print(f'Score: {score}')
-        elif ball.collides_with('edge'):
+
+        elif ball.y+ball.height >= screen_height or ball.y < 0:
             ball.velocity = ball.velocity[0], -ball.velocity[1]
             ball.setx(ball.velocity[0]//2)
-            ball.sety(ball.velocity[1]//2)
+            ball.sety(ball.velocity[1])
+        
+        ball.setx(ball.velocity[0]//2)
+        
+        if ball.collides_with(paddle1,paddle2):
+            ball.velocity = -ball.velocity[0], ball.velocity[1]
+            score += 1
+
+        elif ball.y+ball.height >= screen_height or ball.y < 0:
+            ball.velocity = ball.velocity[0], -ball.velocity[1]
+            ball.setx(ball.velocity[0]//2)
+            ball.sety(ball.velocity[1])
         
         if ball.x < 0:
             game.running = False
@@ -91,5 +109,3 @@ kb.on_press(on_press,True)
 Thread(target=gameloop).start()
 
 game.run()
-
-os.system('cls')

@@ -3,6 +3,7 @@ import time as t
 from threading import Thread
 from math import ceil
 from os import get_terminal_size, system
+from termcolor import colored
 
 system('cls')
 
@@ -11,7 +12,7 @@ size = get_terminal_size()
 screen_width = 100
 screen_height = 20
 
-colors = [' ','░','▒','▓','█']
+blocks = [' ','░','▒','▓','█']
 
 cap_fps = False
 
@@ -26,10 +27,15 @@ def print(*args):
 
 def back(num:int=1):return f'\x1b[{num}A'
 
+def block(thickness,*args, **kwargs) -> str:
+    if not args and not kwargs:
+        return blocks[thickness]
+    return colored(blocks[thickness],*args,**kwargs)
+
 class Sprite:
     def __init__(self,texture:list):
-        self.x = 2
-        self.y = 2
+        self.x = 0
+        self.y = 0
         self.width   = len(texture[0])
         self.height  = len(texture)
         self.texture = texture
@@ -57,23 +63,19 @@ class Sprite:
         game.changed = True
         
     def get_xrange(self):
-        return range(round(self.x),round(self.x)+self.width)
+        return set(range(round(self.x),round(self.x)+self.width))
     
     def get_yrange(self):
-        return range(round(self.y),round(self.y)+self.height)
+        return set(range(round(self.y),round(self.y)+self.height))
     
     def collides_with(self, *others):
-        global extratext
-        collisions = []
         for other in others:
             if other == 'edge':
-                collisions.append((self.x <= 0 or self.y <= 0) or (self.x+self.width >= screen_width or self.y+self.height >= screen_height))
-            else:
-                self.setx(0)
-                other.setx(0)
-                if set(self.xrange) & set(other.xrange) and any(set(self.yrange) & set(other.yrange)):
-                    collisions.append(True)
-        return any(collisions)
+                collides = (self.x <= 0 or self.y <= 0) or (self.x+self.width >= screen_width or self.y+self.height >= screen_height)
+                if collides: return True
+                
+            elif any(self.xrange & other.xrange) and any(self.yrange & other.yrange):
+                return True
         
 sprites:set[Sprite] = set()
 
@@ -87,11 +89,8 @@ class Game:
         self.fps = 0
         self.fps_per_sec = 0
         self.fps_list = []
-        self.tick_time = 0
-        self.mspt = 0
-        self.mspt_list = []
         self.changed = True
-        self.bgColor = colors[1]
+        self.bgColor = block(4,'black')
         self._init_display()
         self.running = True
         
@@ -106,49 +105,39 @@ class Game:
         self.frame += 1
         self.fps_per_sec += 1
         if not self.changed: return
-        self.changed = False
         self.screen = ''
         for y in range(screen_height):
             for x in range(screen_width):
-                color = self.render(x,y)
+                color = self.shader(x,y)
                 self.screen += color
             self.screen += '\n'
         
-    def render(self,x,y):
-        color = self.bgColor
+    def shader(self,x,y):
         for sprite in sprites:
             if x in sprite.xrange and y in sprite.yrange:
                 with contextlib.suppress(Exception):
-                    if sprite.texture[y-sprite.y][x-sprite.x] != self.bgColor:
-                        color = sprite.texture[y-sprite.y][x-sprite.x]
-        return color
+                    return sprite.texture[y-sprite.y][x-sprite.x]
+        return self.bgColor
     
-    def update_display(self):
-        print_(back(screen_height+100),end='')
-        print('\n'*round(size.lines/8))
-        print_(f'FPS: {self.fps:<3} TICK: {self.tick:<10} FRAME: {self.frame:<10} TICK TIME: {self.mspt:<10} {extratext:<10}')
-        print_(self.screen,end='')
-        self.tick += 1
+    def screen_thread(self):
+        while self.running:
+            self.changed = False
+            print_(back(screen_height*10),end='')
+            print_(f'\rFPS: {self.fps:<5} TICK: {self.tick:<10} FRAME: {self.frame:<10} {extratext}\n\r',end='')
+            print_(self.screen,end='')
+            self.tick += 1
         
     def run(self):
         global screen_height
-        Thread(target=self.loop,daemon=True).start()
+        Thread(target=self.fps_thread).start()
+        Thread(target=self.screen_thread).start()
         while self.running:
-            start = t.perf_counter()
-            self.update_display()
+            # Render
             self.screen_renderer()
-            end = t.perf_counter()
-            # tick time calc
-            duration = (end - start)
-            self.tick_time = round(duration,5)
-            self.mspt_list.append(duration)
-            if len(self.mspt_list) > 25: self.mspt_list.pop(1)
-            self.mspt = sum(self.mspt_list)/len(self.mspt_list)
-            with contextlib.suppress(Exception):
-                if cap_fps: t.sleep(0.01 - duration)
             
-    def loop(self):
-        loop = 0
+            t.sleep(0.00075)
+            
+    def fps_thread(self):
         while self.running:
             start = t.perf_counter()
 
@@ -158,15 +147,15 @@ class Game:
             if len(self.fps_list) > 25: self.fps_list.pop(1)
             
             end = t.perf_counter()
-            t.sleep(0.1-(end-start))
-            loop += 1
+            with contextlib.suppress(Exception):
+                t.sleep(0.1-(end-start))
     
     def geometry(self,width:int,height:int) -> None:
         global screen_width, screen_height
         screen_width = width
         screen_height = height
-        #self._init_display()
-        #self.changed = True
+        self._init_display()
+        self.changed = True
 
 if __name__ == '__main__':
     import pong
