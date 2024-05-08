@@ -1,6 +1,7 @@
 from shellEngine import *
 import keyboard as kb
 import random as r
+from threading import Thread
 
 screen_width = 40
 screen_height = 20
@@ -43,6 +44,7 @@ def move(dir:int):
             continue
         positions.add((i.x,i.y))
     
+    # Player check
     if len(positions) < len(player):
         game.running = False
         print_('You Died!')
@@ -54,39 +56,53 @@ def move(dir:int):
     if dir == 0: # up
         player[0].setx(player[1].x)
         player[0].sety(player[1].y-1)
-    if dir == 1: # left
+    elif dir == 1: # left
         player[0].setx(player[1].x-2)
         player[0].sety(player[1].y)
-    if dir == 2: # down
+    elif dir == 2: # down
         player[0].setx(player[1].x)
         player[0].sety(player[1].y+1)
-    if dir == 3: # right
+    elif dir == 3: # right
         player[0].setx(player[1].x+2)
         player[0].sety(player[1].y)
     
+    # Apple check
     for i,a in enumerate(apple):
-        if a.x == player[0].x and a.y == player[0].y:
+        if (a.x,a.y) in positions:
             move_apple(i)
             length += 1
 
+queue = []
 def on_press(key:kb.KeyboardEvent):
+    global direction
     key = key.name
     if key == 'w':
-        move(0)
-        game.changed = True
+        queue.append(0)
     elif key == 'a':
-        move(1)
-        game.changed = True
+        queue.append(1)
     elif key == 's':
-        move(2)
-        game.changed = True
+        queue.append(2)
     elif key == 'd':
-        move(3)
-        game.changed = True
+        queue.append(3)
     
     elif key == 'q':
         game.running = False
 
+direction = 0
+last = 0
+def gameloop():
+    global last
+    while game.running:
+        start = t.perf_counter()
+        if queue: last = queue.pop(0)
+        move(last)
+        game.changed = True
+        end = t.perf_counter()
+        duration = end-start
+        t.sleep(max(max(0.3-length/100,0.1)-duration,0))
+
 kb.on_press(on_press,True)
+
+Thread(target=gameloop).start()
 
 game.run()

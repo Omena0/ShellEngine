@@ -122,20 +122,25 @@ class Game:
     def screen_thread(self):
         while self.running:
             self.changed = False
+            start = t.perf_counter()
             print_(back(screen_height*10),end='')
             print_(f'\rFPS: {self.fps:<5} TICK: {self.tick:<10} FRAME: {self.frame:<10} {extratext}\n\r',end='')
             print_(self.screen,end='')
             self.tick += 1
-        
+            end = t.perf_counter()
+            t.sleep(max(0.01-(end-start),0))
+
     def run(self):
         global screen_height
         Thread(target=self.fps_thread).start()
         Thread(target=self.screen_thread).start()
         while self.running:
             # Render
+            start = t.perf_counter()
             self.screen_renderer()
+            duration = t.perf_counter() - start
             
-            t.sleep(0.00075)
+            t.sleep(max(0.00075-duration,0))
             
     def fps_thread(self):
         while self.running:
