@@ -46,7 +46,7 @@ ball.velocity = r.choice([[4,1],[4,-1],[-4,1],[-4,-1]])
 ball.setx(round(screen_width//2))
 ball.sety(round(screen_height//2))
 
-def gameloop():
+def gameloop():  # sourcery skip: extract-duplicate-method
     score = 0
     while True:
         delay = round(0.1*(150-score)/100,4)

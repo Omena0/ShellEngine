@@ -3,14 +3,15 @@ import keyboard as kb
 import random as r
 from threading import Thread
 
-screen_width = 40
+screen_width = 50
 screen_height = 20
 
 game = Game()
 game.geometry(screen_width,screen_height)
 
-player = []
-player.append(Sprite([[block(3,'green'),block(3,'green')]]))
+print('Score: 0')
+
+player = [Sprite([[block(3,'green'),block(3,'green')]])]
 player[0].setx(20)
 player[0].sety(10)
 player[0].p = 0
@@ -18,14 +19,14 @@ player[0].p = 0
 length = 1
 
 apple = []
-for i in range(2):
+for _ in range(2):
     a = Sprite([[block(3,'red'),block(3,'red')]])
     a.wall_physics = False
     apple.append(a)
 
 def move_apple(num):
-    apple[num].x = r.randint(0,screen_width//2)*2
-    apple[num].y = r.randint(0,screen_height)
+    apple[num].x = r.randint(0,(screen_width-1)//2)*2
+    apple[num].y = r.randint(0,screen_height-1)
     apple[num].setx(0)
     apple[num].sety(0)
     game.changed = True
@@ -33,14 +34,13 @@ def move_apple(num):
 for i in range(len(apple)): move_apple(i)
 
 def move(dir:int):
-    global length
+    global length, extratext
     positions = set()
     for i in player:
         i.p += 1
         if i.p > length:
             player.remove(i)
             sprites.remove(i)
-            del i
             continue
         positions.add((i.x,i.y))
     
@@ -70,6 +70,7 @@ def move(dir:int):
     for i,a in enumerate(apple):
         if (a.x,a.y) in positions:
             move_apple(i)
+            print(f'Score: {length}')
             length += 1
 
 queue = []
@@ -99,7 +100,7 @@ def gameloop():
         game.changed = True
         end = t.perf_counter()
         duration = end-start
-        t.sleep(max(max(0.3-length/100,0.1)-duration,0))
+        t.sleep(max(max(0.2-length/120,0.1)-duration,0))
 
 kb.on_press(on_press,True)
 
