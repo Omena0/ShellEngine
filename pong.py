@@ -106,6 +106,6 @@ def on_press(key):
     
 kb.on_press(on_press,True)
 
-Thread(target=gameloop).start()
+Thread(target=gameloop,daemon=True).start()
 
 game.run()

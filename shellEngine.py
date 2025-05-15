@@ -3,8 +3,8 @@ from termcolor import colored
 from threading import Thread
 from math import ceil
 import contextlib
-import collision
 import time as t
+import sys
 
 system('cls')
 
@@ -19,7 +19,7 @@ cap_fps = False
 
 extratext = ''
 
-print_ = print
+print_ = sys.stdout.write
 
 def print(*args):
     global extratext
@@ -125,13 +125,17 @@ class Game:
         Thread(target=self.fps_thread).start()
         while self.running:
             # Render
+            start = t.perf_counter()
             self.screen_renderer()
+            end = t.perf_counter()
+            print((end-start)*1000)
 
             # Update screen
             self.changed = False
-            print_(back(screen_height*10),end='')
-            print_(f'\rFPS: {self.fps:<5} FRAME: {self.frame:<10} {extratext}\n\r',end='')
-            print_(self.screen,end='')
+            print_(back(screen_height*10))
+            print_(f'\rFPS: {self.fps:<5} FRAME: {self.frame:<10} {extratext}\n\r')
+            print_(self.screen)
+            sys.stdout.flush()
 
     def fps_thread(self):
         while self.running:
@@ -144,7 +148,7 @@ class Game:
 
             end = t.perf_counter()
             with contextlib.suppress(Exception):
-                t.sleep(0.1-(end-start))
+                t.sleep(1-(end-start))
 
     def geometry(self,width:int,height:int) -> None:
         global screen_width, screen_height

@@ -1,7 +1,8 @@
+from threading import Thread
 from shellEngine import *
 import keyboard as kb
 import random as r
-from threading import Thread
+import time as t
 
 screen_width = 50
 screen_height = 20
@@ -104,6 +105,6 @@ def gameloop():
 
 kb.on_press(on_press,True)
 
-Thread(target=gameloop).start()
+Thread(target=gameloop,daemon=True).start()
 
 game.run()
